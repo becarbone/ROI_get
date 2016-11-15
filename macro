@@ -10,9 +10,12 @@ sourcelist = getFileList(sourcedir);
 ROIdir = getDirectory("Choose folder to save the ROI in");
 
 Dialog.create("Channel Info");
-		Dialog.addNumber("how many channels?",0,0,1,"channel/s");
+		choices = newArray("rectangle","polygon");
+		Dialog.addChoice("What shape ROI?",choices,"polygon");
+		Dialog.addNumber("How many channels?",0,0,1,"channel/s");
 	Dialog.show();
 	numChan = Dialog.getNumber();
+	choice = Dialog.getChoice();
 	Dialog.create("what colors\nare they");
 		channels = newArray("Green","Red","Blue","Cyan");
 		for(n=0;n<numChan;n++){
@@ -26,17 +29,14 @@ Dialog.create("Channel Info");
 
 for(p = 0; p<sourcelist.length;p++) {
 	open(sourcedir+sourcelist[p]);
+	run("Properties...", "channels=1 slices=1 frames=1 unit=micron pixel_width=0.1801990 pixel_height=0.1801990 voxel_depth=0.2967900");
 	title = getTitle();
 	for (i = nImages; i > 0; i--) {
 		selectImage(i);
 		run("Channels Tool...");
-		//enhances the cerulean channel to better see HEK areas
-		Stack.setChannel(1);
-		run("Enhance Contrast...", "saturated=0.1");
-		waitForUser("Confirm live HEK");
 		//creates a loop for multiple HEK in one image
 		Dialog.create("Repeat?");
-			Dialog.addMessage("Do you have another HEK in frame?");
+			Dialog.addMessage("Do you have a new ROI in frame?");
 			//if you answer "yes" in lowercase it will continue, if
 			//anything else it will close the image and continue to the next one
 			Dialog.addString("", "yes or no",40);
@@ -62,7 +62,7 @@ for(p = 0; p<sourcelist.length;p++) {
 
 function createROI()
 	{
-	setTool("polygon");
+	setTool(choice);
 	run("In [+]");
 	run("In [+]");
 	run("In [+]");
