@@ -1,0 +1,96 @@
+var total, sourcedir, sourcelist, ROIdir, numChan, finChan;
+var channels, chanArray, title, i, n, repeat, newTitle, measure; 
+
+waitForUser("This macro needs two folders: \n-the original images \n-an empty one for the ROI");
+
+total = 0
+
+sourcedir = getDirectory("Choose folder of images");
+sourcelist = getFileList(sourcedir);
+ROIdir = getDirectory("Choose folder to save the ROI in");
+
+Dialog.create("Channel Info");
+		Dialog.addNumber("how many channels?",0,0,1,"channel/s");
+	Dialog.show();
+	numChan = Dialog.getNumber();
+	Dialog.create("what colors\nare they");
+		channels = newArray("Green","Red","Blue","Cyan");
+		for(n=0;n<numChan;n++){
+			Dialog.addChoice("color",channels,channels[n]);
+		}
+	Dialog.show();
+	chanArray = newArray();
+	for(n=0;n<numChan;n++) {
+		chanArray = Array.concat(chanArray,Dialog.getChoice());
+	}
+
+for(p = 0; p<sourcelist.length;p++) {
+	open(sourcedir+sourcelist[p]);
+	title = getTitle();
+	for (i = nImages; i > 0; i--) {
+		selectImage(i);
+		run("Channels Tool...");
+		//enhances the cerulean channel to better see HEK areas
+		Stack.setChannel(1);
+		run("Enhance Contrast...", "saturated=0.1");
+		waitForUser("Confirm live HEK");
+		//creates a loop for multiple HEK in one image
+		Dialog.create("Repeat?");
+			Dialog.addMessage("Do you have another HEK in frame?");
+			//if you answer "yes" in lowercase it will continue, if
+			//anything else it will close the image and continue to the next one
+			Dialog.addString("", "yes or no",40);
+			Dialog.show();
+		repeat = Dialog.getString();
+		while (repeat == "yes") {
+			run("Original Scale");			
+			title = getTitle();
+			//this is the function, see the bottom of the macro
+			createROI();
+			Dialog.create("Repeat?");
+				Dialog.addMessage("Do you have another HEK in frame?");
+				Dialog.addString("", "yes or no",30);
+				Dialog.show();
+			repeat = Dialog.getString();
+		}
+		if(repeat != "yes") {
+			close();
+		}
+	}
+}
+
+
+function createROI()
+	{
+	setTool("polygon");
+	run("In [+]");
+	run("In [+]");
+	run("In [+]");
+	title=getTitle();
+	Dialog.create("Title");
+		Dialog.addMessage("Rename for HEK ROI number");
+		Dialog.addString("", title,50);
+		Dialog.show();
+	newTitle = Dialog.getString();
+	rename(newTitle);
+	title=getTitle();
+	selectWindow(title);
+	waitForUser ("Select HEK ROI then hit OK");
+	run("Clear Results");
+	run("Measure");
+	measure = getResult("Area",0);
+	print(title + " " + measure);
+	selectWindow(title);
+	c=0;
+	for(l=0;l<numChan;l++) {	
+		run("Copy");
+		run("Internal Clipboard");
+		selectWindow("Clipboard");
+		run(chanArray[c]);
+		saveAs("Tiff", ROIdir+title+"_"+chanArray[c]);
+		close();
+		c=c+1;
+	}
+	selectWindow(title);
+	run("View 100%");
+}
