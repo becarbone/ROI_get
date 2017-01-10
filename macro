@@ -1,14 +1,12 @@
 var total, sourcedir, sourcelist, ROIdir, numChan, finChan;
 var channels, chanArray, title, i, n, repeat, newTitle, measure; 
-
-waitForUser("This macro needs a few folders: \n-the original images \n-an empty one for the each channel");
-
+waitForUser("This macro needs a few folders: \n-the original images \n-an empty one for the each channel \n-an empty one for the ROI files");
 total = 0
-
 sourcedir = getDirectory("Choose folder of images");
 sourcelist = getFileList(sourcedir);
 ROIdir = getDirectory("Choose folder to save the ROI in");
-
+filedir = getDirectory("Choose folder for ROI .zip files");
+ROIarrayzip = newArray("ROI,Area","");
 Dialog.create("Channel Info");
 		choices = newArray("rectangle","polygon");
 		Dialog.addChoice("What shape ROI?",choices,"polygon");
@@ -38,7 +36,7 @@ for(p = 0; p<sourcelist.length;p++) {
 	for (i = nImages; i > 0; i--) {
 		selectImage(i);
 		run("Channels Tool...");
-		//creates a loop for multiple HEK in one image
+		//creates a loop for multiple ROI in one image
 		Dialog.create("Repeat?");
 			Dialog.addMessage("Do you have a new ROI in frame?");
 			//if you answer "yes" in lowercase it will continue, if
@@ -46,22 +44,28 @@ for(p = 0; p<sourcelist.length;p++) {
 			Dialog.addString("", "yes or no",40);
 			Dialog.show();
 		repeat = Dialog.getString();
+		roiManager("reset");
 		while (repeat == "yes") {
 			run("Original Scale");			
 			title = getTitle();
 			//this is the function, see the bottom of the macro
 			createROI();
+			ROIArrayzip = Array.concat(ROIArrayzip,title + "," + measure);
 			Dialog.create("Repeat?");
-				Dialog.addMessage("Do you have another HEK in frame?");
+				Dialog.addMessage("Do you have a new ROI in frame?");
 				Dialog.addString("", "yes or no",30);
 				Dialog.show();
 			repeat = Dialog.getString();
 		}
 		if(repeat != "yes") {
+			roiManager("Save", filedir + title+"_ROI.zip");
 			close();
 		}
 	}
 }
+Array.show(ROIArrayzip);
+selectWindow("ROIArrayzip");
+saveAs("Results", filedir+"ROI.csv")
 
 
 function createROI()
@@ -72,18 +76,19 @@ function createROI()
 	run("In [+]");
 	title=getTitle();
 	Dialog.create("Title");
-		Dialog.addMessage("Rename for HEK ROI number");
+		Dialog.addMessage("Rename for ROI number");
 		Dialog.addString("", title,50);
 		Dialog.show();
 	newTitle = Dialog.getString();
 	rename(newTitle);
 	title=getTitle();
 	selectWindow(title);
-	waitForUser ("Select HEK ROI then hit OK");
+	waitForUser ("Select ROI then hit OK");
+	roiManager("Add");
 	run("Clear Results");
 	run("Measure");
 	measure = getResult("Area",0);
-	print(title + " " + measure);
+	
 	selectWindow(title);
 	c=0;
 	for(l=0;l<numChan;l++) {	
