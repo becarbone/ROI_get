@@ -43,8 +43,9 @@ if(beg != "yes") {
 	Dialog.create("which image to start at?");
 		Dialog.addCheckboxGroup((sourcelist.length/2),2,images,defArray);
 	Dialog.show;
+	yes = Dialog.getCheckbox();
 	for(n=0;n<sourcelist.length;n++) {
-		if (Dialog.getCheckbox() == 1) {
+		if(yes == true) {
 			namen = n;
 		}
 	}
@@ -75,6 +76,7 @@ for(p = start; p<sourcelist.length;p++) {
 			title = getTitle();
 			//this is the function, see the bottom of the macro
 			createROI();
+			print(title+"	"+measure);
 			AreaArray = Array.concat(AreaArray,title+","+measure);
 			Dialog.create("Repeat?");
 				Dialog.addMessage("Do you have another ROI in frame?");
@@ -83,8 +85,14 @@ for(p = start; p<sourcelist.length;p++) {
 			repeat = Dialog.getString();
 		}
 		if(repeat != "yes") {
-			roiManager("Save", filedir + title+"_ROI.zip");
-			close();
+			run("ROI Manager...");
+			if(roiManager("count") > 0) {
+				roiManager("Save", filedir + title+"_ROI.zip");
+				close();
+			}
+			else {
+				close();
+			}
 		}
 	}
 }
