@@ -43,7 +43,7 @@ if(beg != "yes") {
 		Dialog.addCheckboxGroup((sourcelist.length/2),2,images,defArray);
 	Dialog.show;
 	for(n=0;n<sourcelist.length;n++) {
-		if (Dialog.getCheckbox() == 1) {
+		if(Dialog.getCheckbox() == true) {
 			namen = n;
 		}
 	}
@@ -83,9 +83,12 @@ for(p = start; p<sourcelist.length;p++) {
 		if(repeat != "yes") {
 			close();
 		}
+	Array.show(AreaArray);
 	}
 }
 Array.show(AreaArray);
+selectWindow("AreaArray");
+saveAs("Results",ROIdir+"ROI_area");
 
 
 function createROI()
