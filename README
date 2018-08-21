@@ -1,0 +1,33 @@
+This macro is used to get ROI from .tiff images. It was designed for co-culture
+but this generally just means that the image should be:
+
+1024x1024
+4 channels
+Cyan, Blue, Green, Red
+not RGB
+not z-stack
+
+But you can change the # of channels and the colors of the channels.
+
+It has you pick the file to save the ROI in - creates nested channel folders and saves
+each of the channels separately. It also has you pick a file to save the ROIManager info
+in - this allows you to see where on the image the ROI was selected when opened in imagej.
+
+You can choose a polygon ROI selector or a rectangular one.
+
+For each image, it will ask you if there in an ROI in the image, then to pick a name - 
+this is for the individual ROI. I will usually just add a "...-1" etc... to the iamge name. 
+If you type anything other than "yes" it will close the image and move you to the next one. 
+If you see an ROI, type "yes", it will load your selector and zoom in on the image.
+
+When you have selected the ROI and hit "ok" it will automatically save the ROI as individual
+channels in each of the aforementioned folders with the name you specified and "_color".
+It will print the name of the ROI and the are of the selection as well, I'd recommend
+manually copying it to a spreadsheet in case you accidentally close an image/want to restart
+for any reason. If you restart the program it will not retain the previously listed areas.
+
+At the end of the program, it automatically saves the areas, but it only saves
+the areas collected during the specific run of the program. This means if you close it/restart
+it at any point it will save the areas from the point at which you restarted it.
+
+This macro is currently used for all co-culture analysis.
