@@ -1,18 +1,14 @@
 var total, sourcedir, sourcelist, ROIdir, numChan, finChan;
 var channels, chanArray, title, i, n, repeat, newTitle, measure; 
-waitForUser("This macro needs a few folders: \n-the original images \n-an empty one for the each channel");
+waitForUser("This macro needs an empty folder for the saved ROI images and all images open \nSpecifically for use with co-culture ROI");
 total = 0
-sourcedir = getDirectory("Choose folder of images");
-sourcelist = getFileList(sourcedir);
 ROIdir = getDirectory("Choose folder to save the ROI in");
 filedir = getDirectory("Choose folder for ROI .zip files");
 Dialog.create("Channel Info");
-	Dialog.addString("starting at the beginning?","yes");
 	choices = newArray("rectangle","polygon");
 	Dialog.addChoice("What shape ROI?",choices,"polygon");
-	Dialog.addNumber("How many channels?",0,0,1,"channel/s");
+	Dialog.addNumber("How many channels?",4,0,1,"channel/s");
 Dialog.show();
-beg = Dialog.getString();
 numChan = Dialog.getNumber();
 choice = Dialog.getChoice();
 Dialog.create("what colors\nare they");
@@ -21,7 +17,8 @@ Dialog.create("what colors\nare they");
 		Dialog.addChoice("color",channels,channels[n]);
 	}
 Dialog.show();
-AreaArray = newArray("ROI,Area");
+rurea = "ROI	Area";
+print(rurea);
 chanArray = newArray();
 ROIArray = newArray();
 for(n=0;n<numChan;n++) {
@@ -32,73 +29,46 @@ for(n=0;n<numChan;n++) {
 	ROIpath = getDirectory("Choose folder for the " + chanArray[n]+" channel");
 	ROIArray = Array.concat(ROIArray, ROIpath);
 }
-images = newArray();
-defArray = newArray();
-for(n=0;n<sourcelist.length;n++) {
-		images = Array.concat(images,sourcelist[n]);
-		defArray = Array.concat(defArray,false);
-	}
-namen = "oops";
-if(beg != "yes") {
-	Dialog.create("which image to start at?");
-		Dialog.addCheckboxGroup((sourcelist.length/2),2,images,defArray);
-	Dialog.show;
-	yes = Dialog.getCheckbox();
-	for(n=0;n<sourcelist.length;n++) {
-		if(yes == true) {
-			namen = n;
-		}
-	}
-	start = namen;
-}
-else {
-	start = 0;
-}
 
-for(p = start; p<sourcelist.length;p++) {
-	open(sourcedir+sourcelist[p]);
+for(p=nImages;p>0;p--) {
+	selectImage(p);
 	run("Properties...", "channels="+numChan+" slices=1 frames=1 unit=micron pixel_width=0.1801990 pixel_height=0.1801990 voxel_depth=0.2967900");
 	title = getTitle();
-	for (i = nImages; i > 0; i--) {
-		selectImage(i);
-		run("Channels Tool...");
-		//creates a loop for multiple HEK in one image
+	run("Channels Tool...");
+	//creates a loop for multiple HEK in one image
+	Dialog.create("Repeat?");
+		Dialog.addMessage("Do you have a new ROI in frame?");
+		//if you answer "yes" in lowercase it will continue, if
+		//anything else it will close the image and continue to the next one
+		Dialog.addString("", "yes or no",40);
+		Dialog.show();
+	repeat = Dialog.getString();
+	roiManager("reset");
+	while (repeat == "yes") {
+		run("Original Scale");			
+		title = getTitle();
+		//this is the function, see the bottom of the macro
+		createROI();
+		rurea = rurea+"\n"+title+"	"+measure;
+		print(title+"	"+measure);
 		Dialog.create("Repeat?");
-			Dialog.addMessage("Do you have a new ROI in frame?");
-			//if you answer "yes" in lowercase it will continue, if
-			//anything else it will close the image and continue to the next one
-			Dialog.addString("", "yes or no",40);
+			Dialog.addMessage("Do you have another ROI in frame?");
+			Dialog.addString("", "yes or no",30);
 			Dialog.show();
 		repeat = Dialog.getString();
-		roiManager("reset");
-		while (repeat == "yes") {
-			run("Original Scale");			
-			title = getTitle();
-			//this is the function, see the bottom of the macro
-			createROI();
-			print(title+"	"+measure);
-			AreaArray = Array.concat(AreaArray,title+","+measure);
-			Dialog.create("Repeat?");
-				Dialog.addMessage("Do you have another ROI in frame?");
-				Dialog.addString("", "yes or no",30);
-				Dialog.show();
-			repeat = Dialog.getString();
+	}
+	if(repeat != "yes") {
+		run("ROI Manager...");
+		if(roiManager("count") > 0) {
+			roiManager("Save", filedir + title+"_ROI.zip");
+			close();
 		}
-		if(repeat != "yes") {
-			run("ROI Manager...");
-			if(roiManager("count") > 0) {
-				roiManager("Save", filedir + title+"_ROI.zip");
-				close();
-			}
-			else {
-				close();
-			}
+		else {
+			close();
 		}
 	}
 }
-Array.show(AreaArray);
-selectWindow("AreaArray");
-saveAs("Results", filedir+"ROI.csv");
+File.saveString(rurea, ROIdir+"area.xls");
 
 
 function createROI()
