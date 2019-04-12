@@ -1,6 +1,15 @@
 var total, sourcedir, sourcelist, ROIdir, numChan, finChan;
 var channels, chanArray, title, i, n, repeat, newTitle, measure; 
-waitForUser("This macro needs an empty folder for the saved ROI images and all images open \nSpecifically for use with co-culture ROI");
+
+//this macro is to select ROI and split them by channel, saving each channel in individual folders
+//intended for the co-culture analysis, but not limited in application
+
+//the basic process is that it asks you to open all the images you want ROI from, select a folder
+//to save the output ROI images in (creating subfolders for each channel) as well as the zip file
+//for the ROImanager metadata detailing where in the image the ROI were taken from
+//the macro outputs the area of the ROI selected for use in the "co-culture_1cha-stepped" macro
+
+waitForUser("This macro needs an empty folder for the saved ROI images and all images open");
 total = 0
 ROIdir = getDirectory("Choose folder to save the ROI in");
 filedir = getDirectory("Choose folder for ROI .zip files");
@@ -26,6 +35,7 @@ for(n=0;n<numChan;n++) {
 	if(File.exists(ROIdir+chanArray[n])!=1) {
 		File.makeDirectory(ROIdir+chanArray[n]);
 	}
+	//ROIpath = ROIdir+chanArray[n];
 	ROIpath = getDirectory("Choose folder for the " + chanArray[n]+" channel");
 	ROIArray = Array.concat(ROIArray, ROIpath);
 }
@@ -70,6 +80,12 @@ for(p=nImages;p>0;p--) {
 }
 File.saveString(rurea, ROIdir+"area.xls");
 
+//this function zooms in, gets the title of the image, prompts you to change it based on the # ROI you've selected
+//i.e. ROI-1, ROI-2, etc...
+//it will then measure the region selected, copy it in each channel and save each channel as an individual image
+//with the color in the name
+//update 4/12/2019 - v2
+//had it use the duplicate function instead of copy to retain the image metadata w/r/t pixel/micron ratio
 
 function createROI()
 	{
@@ -95,9 +111,8 @@ function createROI()
 	c=0;
 	for(l=0;l<numChan;l++) {	
 		setSlice(l+1);
-		run("Copy");
-		run("Internal Clipboard");
-		selectWindow("Clipboard");
+		run("Duplicate...", "title=ROI");
+		selectWindow("ROI");
 		run(chanArray[c]);
 		saveAs("Tiff", ROIArray[l]+title+"_"+chanArray[c]);
 		close();
